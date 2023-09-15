@@ -168,43 +168,94 @@ namespace Autofac.Extensions.DependencyInjection
         {
             foreach (var descriptor in descriptors)
             {
-                if (descriptor.ImplementationType != null)
+                if (descriptor.IsKeyedService)
                 {
-                    // Test if the an open generic type is being registered
-                    var serviceTypeInfo = descriptor.ServiceType.GetTypeInfo();
-                    if (serviceTypeInfo.IsGenericTypeDefinition)
+                    if (descriptor.KeyedImplementationType != null)
                     {
-                        builder
-                            .RegisterGeneric(descriptor.ImplementationType)
-                            .As(descriptor.ServiceType)
-                            .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                        // Test if the an open generic type is being registered
+                        var serviceTypeInfo = descriptor.ServiceType.GetTypeInfo();
+
+                        if (serviceTypeInfo.IsGenericTypeDefinition)
+                        {
+                            builder
+                                .RegisterGeneric(descriptor.KeyedImplementationType)
+                                .Keyed(descriptor.ServiceKey, descriptor.ServiceType)
+                                .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                        }
+                        else
+                        {
+                            builder
+                                .RegisterType(descriptor.KeyedImplementationType)
+                                .Keyed(descriptor.ServiceKey, descriptor.ServiceType)
+                                .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                        }
+                    }
+                    else if (descriptor.KeyedImplementationFactory != null)
+                    {
+                        var registration =
+                            RegistrationBuilder
+                                .ForDelegate(
+                                    descriptor.ServiceType,
+                                    (context, parameters) =>
+                                    {
+                                        var serviceProvider = context.Resolve<IServiceProvider>();
+
+                                        return descriptor.KeyedImplementationFactory(serviceProvider, descriptor.ServiceKey);
+                                    })
+                                .Keyed(descriptor.ServiceKey, descriptor.ServiceType)
+                                .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons)
+                                .CreateRegistration();
+
+                        builder.RegisterComponent(registration);
                     }
                     else
                     {
                         builder
-                            .RegisterType(descriptor.ImplementationType)
-                            .As(descriptor.ServiceType)
-                            .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                            .RegisterInstance(descriptor.KeyedImplementationInstance)
+                            .Keyed(descriptor.ServiceKey, descriptor.ServiceType)
+                            .ConfigureLifecycle(descriptor.Lifetime, null);
                     }
-                }
-                else if (descriptor.ImplementationFactory != null)
-                {
-                    var registration = RegistrationBuilder.ForDelegate(descriptor.ServiceType, (context, parameters) =>
-                        {
-                            var serviceProvider = context.Resolve<IServiceProvider>();
-                            return descriptor.ImplementationFactory(serviceProvider);
-                        })
-                        .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons)
-                        .CreateRegistration();
-
-                    builder.RegisterComponent(registration);
                 }
                 else
                 {
-                    builder
-                        .RegisterInstance(descriptor.ImplementationInstance)
-                        .As(descriptor.ServiceType)
-                        .ConfigureLifecycle(descriptor.Lifetime, null);
+                    if (descriptor.ImplementationType != null)
+                    {
+                        // Test if the an open generic type is being registered
+                        var serviceTypeInfo = descriptor.ServiceType.GetTypeInfo();
+                        if (serviceTypeInfo.IsGenericTypeDefinition)
+                        {
+                            builder
+                                .RegisterGeneric(descriptor.ImplementationType)
+                                .As(descriptor.ServiceType)
+                                .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                        }
+                        else
+                        {
+                            builder
+                                .RegisterType(descriptor.ImplementationType)
+                                .As(descriptor.ServiceType)
+                                .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons);
+                        }
+                    }
+                    else if (descriptor.ImplementationFactory != null)
+                    {
+                        var registration = RegistrationBuilder.ForDelegate(descriptor.ServiceType, (context, parameters) =>
+                            {
+                                var serviceProvider = context.Resolve<IServiceProvider>();
+                                return descriptor.ImplementationFactory(serviceProvider);
+                            })
+                            .ConfigureLifecycle(descriptor.Lifetime, lifetimeScopeTagForSingletons)
+                            .CreateRegistration();
+
+                        builder.RegisterComponent(registration);
+                    }
+                    else
+                    {
+                        builder
+                            .RegisterInstance(descriptor.ImplementationInstance)
+                            .As(descriptor.ServiceType)
+                            .ConfigureLifecycle(descriptor.Lifetime, null);
+                    }
                 }
             }
         }

@@ -136,6 +136,23 @@ namespace Autofac.Extensions.DependencyInjection.Test
         }
 
         [Fact]
+        public void CanRegisterKeyedFactoryService()
+        {
+            var builder = new ContainerBuilder();
+            var serviceKey = new object();
+            var anotherServiceKey = new object();
+            var descriptor = new ServiceDescriptor(typeof(IService), serviceKey: serviceKey, factory: (sp, key) => new Service(), lifetime: ServiceLifetime.Transient);
+            builder.Populate(new ServiceDescriptor[] { descriptor });
+            var container = builder.Build();
+
+            var service = container.ResolveOptionalKeyed<IService>(serviceKey);
+            var anotherService = container.ResolveOptionalKeyed<IService>(anotherServiceKey);
+
+            Assert.True(service != null);
+            Assert.True(anotherService == null);
+        }
+
+        [Fact]
         public void CanResolveOptionsFromChildScopeProvider()
         {
             // Issue #32: Registering options in a child scope fails to resolve IOptions<T>.
