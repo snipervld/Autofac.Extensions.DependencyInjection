@@ -33,7 +33,7 @@ namespace Autofac.Extensions.DependencyInjection
     /// </summary>
     /// <seealso cref="System.IServiceProvider" />
     /// <seealso cref="Microsoft.Extensions.DependencyInjection.ISupportRequiredService" />
-    public class AutofacServiceProvider : IServiceProvider, ISupportRequiredService, IDisposable
+    public class AutofacServiceProvider : IServiceProvider, IKeyedServiceProvider, ISupportRequiredService, IDisposable
     {
         private readonly ILifetimeScope _lifetimeScope;
 
@@ -72,6 +72,23 @@ namespace Autofac.Extensions.DependencyInjection
         }
 
         /// <summary>
+        /// Gets service of type serviceType from the System.IServiceProvider implementing this interface.
+        /// </summary>
+        /// <param name="serviceType">
+        /// An object that specifies the type of service object to get.
+        /// </param>
+        /// <param name="serviceKey">
+        /// The Microsoft.Extensions.DependencyInjection.ServiceDescriptor.ServiceKey of the service.
+        /// </param>
+        /// <returns>
+        /// A service object of type serviceType. Throws an exception if the System.IServiceProvider cannot create the object.
+        /// </returns>
+        public object GetRequiredKeyedService(Type serviceType, object serviceKey)
+        {
+            return this._lifetimeScope.ResolveKeyed(serviceKey, serviceType);
+        }
+
+        /// <summary>
         /// Gets the service object of the specified type.
         /// </summary>
         /// <param name="serviceType">
@@ -84,6 +101,24 @@ namespace Autofac.Extensions.DependencyInjection
         public object GetService(Type serviceType)
         {
             return this._lifetimeScope.ResolveOptional(serviceType);
+        }
+
+        /// <summary>
+        /// Gets the service object of the specified type.
+        /// </summary>
+        /// <param name="serviceType">
+        /// An object that specifies the type of service object to get.
+        /// </param>
+        /// <param name="serviceKey">
+        /// An object that specifies the key of service object to get.
+        /// </param>
+        /// <returns>
+        /// A service object of type serviceType. -or- null if there is no service object
+        /// of type serviceType.
+        /// </returns>
+        public object GetKeyedService(Type serviceType, object serviceKey)
+        {
+            return this._lifetimeScope.ResolveOptionalService(new Autofac.Core.KeyedService(serviceKey, serviceType));
         }
 
         /// <summary>

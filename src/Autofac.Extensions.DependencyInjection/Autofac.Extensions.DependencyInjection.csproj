@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Autofac implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions, the .NET Framework dependency injection abstraction.</Description>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>5.0.1-keyed-support</Version>
+    <Version>5.0.1-keyed-support-v2</Version>
     <PackageId>snipervld.Autofac.Extensions.DependencyInjection</PackageId>
     <PackageTags>autofac;di;ioc;dependencyinjection;aspnet;aspnetcore</PackageTags>
     <RepositoryUrl>https://github.com/snipervld/Autofac.Extensions.DependencyInjection</RepositoryUrl>
